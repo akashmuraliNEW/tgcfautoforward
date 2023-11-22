@@ -2,7 +2,9 @@
 
 import logging
 import os
+import platform
 import re
+import sys
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -10,10 +12,21 @@ from telethon.client import TelegramClient
 from telethon.hints import EntityLike
 from telethon.tl.custom.message import Message
 
+from tgcf import __version__
 from tgcf.config import CONFIG
+from tgcf.plugin_models import STYLE_CODES
 
 if TYPE_CHECKING:
     from tgcf.plugins import TgcfMessage
+
+
+def platform_info():
+    nl = "\n"
+    return f"""Running tgcf {__version__}\
+    \nPython {sys.version.replace(nl,"")}\
+    \nOS {os.name}\
+    \nPlatform {platform.system()} {platform.release()}\
+    \n{platform.architecture()} {platform.processor()}"""
 
 
 async def send_message(recipient: EntityLike, tm: "TgcfMessage") -> Message:
@@ -65,7 +78,21 @@ def match(pattern: str, string: str, regex: bool) -> bool:
 
 
 def replace(pattern: str, new: str, string: str, regex: bool) -> str:
+    def fmt_repl(matched):
+        style = new
+        s = STYLE_CODES.get(style)
+        return f"{s}{matched.group(0)}{s}"
+
     if regex:
+        if new in STYLE_CODES:
+            compliled_pattern = re.compile(pattern)
+            return compliled_pattern.sub(repl=fmt_repl, string=string)
         return re.sub(pattern, new, string)
     else:
         return string.replace(pattern, new)
+
+
+def clean_session_files():
+    for item in os.listdir():
+        if item.endswith(".session") or item.endswith(".session-journal"):
+            os.remove(item)

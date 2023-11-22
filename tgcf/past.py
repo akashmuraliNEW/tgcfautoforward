@@ -15,14 +15,23 @@ from telethon.tl.patched import MessageService
 
 from tgcf import config
 from tgcf import storage as st
-from tgcf.config import API_HASH, API_ID, CONFIG, SESSION, write_config
+from tgcf.config import CONFIG, get_SESSION, write_config
 from tgcf.plugins import apply_plugins
-from tgcf.utils import send_message
+from tgcf.utils import clean_session_files, send_message
 
 
 async def forward_job() -> None:
     """Forward all existing messages in the concerned chats."""
-    async with TelegramClient(SESSION, API_ID, API_HASH) as client:
+    clean_session_files()
+    if CONFIG.login.user_type != 1:
+        logging.warning(
+            "You cannot use bot account for tgcf past mode. Telegram does not allow bots to access chat history."
+        )
+        return
+    SESSION = get_SESSION()
+    async with TelegramClient(
+        SESSION, CONFIG.login.API_ID, CONFIG.login.API_HASH
+    ) as client:
         config.from_to = await config.load_from_to(client, config.CONFIG.forwards)
         client: TelegramClient
         for from_to, forward in zip(config.from_to.items(), config.CONFIG.forwards):
@@ -61,7 +70,7 @@ async def forward_job() -> None:
                     last_id = message.id
                     logging.info(f"forwarding message with id = {last_id}")
                     forward.offset = last_id
-                    write_config(CONFIG)
+                    write_config(CONFIG, persist=False)
                     time.sleep(CONFIG.past.delay)
                     logging.info(f"slept for {CONFIG.past.delay} seconds")
 

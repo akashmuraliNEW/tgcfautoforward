@@ -3,15 +3,12 @@
 import asyncio
 import logging
 import os
-import platform
 import sys
-import time
 from enum import Enum
 from typing import Optional
 
 import typer
 from dotenv import load_dotenv
-from pyfiglet import Figlet
 from rich import console, traceback
 from rich.logging import RichHandler
 from verlat import latest_release
@@ -27,19 +24,7 @@ con = console.Console()
 
 
 def topper():
-    fig = Figlet(font="speed")
-    rendered = fig.renderText("tgcf")
-    time_passed = 0
-
-    while time_passed < 5:
-        cmd = "clear" if os.name == "posix" else "cls"
-        os.system(cmd)
-        if time_passed % 2 == 0:
-            print(rendered)
-        else:
-            con.print(rendered)
-        time.sleep(0.5)
-        time_passed += 1
+    print("tgcf")
     version_check()
     print("\n")
 
@@ -70,14 +55,6 @@ def verbosity_callback(value: bool):
     )
     topper()
     logging.info("Verbosity turned on! This is suitable for debugging")
-    nl = "\n"
-    logging.info(
-        f"""Running tgcf {__version__}\
-    \nPython {sys.version.replace(nl,"")}\
-    \nOS {os.name}\
-    \nPlatform {platform.system()} {platform.release()}\
-    \n{platform.architecture()} {platform.processor()}"""
-    )
 
 
 def version_callback(value: bool):
@@ -96,6 +73,8 @@ def version_check():
             \nVisit http://bit.ly/update-tgcf",
             style="bold yellow",
         )
+    else:
+        con.print(f"Running latest tgcf version {__version__}", style="bold green")
 
 
 @app.command()
@@ -124,6 +103,8 @@ def main(
     Source Code: https://github.com/aahnik/tgcf
 
     For updates join telegram channel @aahniks_code
+
+    To run web interface run `tgcf-web` command.
     """
     if FAKE:
         logging.critical(f"You are running fake with {mode} mode")
